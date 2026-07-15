@@ -2,123 +2,96 @@ import streamlit as st
 import pandas as pd
 import joblib
 
+# ----------------------------------
+# PAGE CONFIG
+# ----------------------------------
+
 st.set_page_config(
-    page_title="Predict Engagement",
+    page_title="Predict High Engagement",
+    page_icon="🤖",
     layout="wide"
 )
 
-st.title("🤖 Predict High Engagement")
+st.title("🤖 High Engagement Prediction")
 
 st.write(
 """
-Enter learner details below to predict whether the learner
-belongs to the High Engagement category.
+Predict whether a learner is likely to belong to the **High Engagement**
+category using the trained Decision Tree model.
 """
 )
 
-# ==========================
-# LOAD MODEL
-# ==========================
+# ----------------------------------
+# LOAD MODEL & ENCODERS
+# ----------------------------------
 
-model = joblib.load("models/decision_tree.pkl")
+model = joblib.load("decision_tree.pkl")
 
-# ==========================
+encoders = joblib.load("encoders.pkl")
+
+# ----------------------------------
 # USER INPUT
-# ==========================
+# ----------------------------------
 
-col1,col2 = st.columns(2)
+c1,c2 = st.columns(2)
 
-with col1:
+with c1:
 
     region = st.selectbox(
         "Region",
-        ["North","South","East","West"]
+        encoders["Region"].classes_
     )
 
     course = st.selectbox(
         "Course",
-        [
-            "Data Science",
-            "AI",
-            "Business Analytics",
-            "Cyber Security"
-        ]
+        encoders["Course"].classes_
+    )
+
+    time_slot = st.selectbox(
+        "Time Slot",
+        encoders["Time_Slot"].classes_
     )
 
     pitch = st.selectbox(
         "Pitch Category",
-        [
-            "Consultative",
-            "Promotional",
-            "Informative"
-        ]
-    )
-
-    script = st.selectbox(
-        "Script Tone",
-        [
-            "Formal",
-            "Friendly",
-            "Persuasive"
-        ]
+        encoders["Pitch_Category"].classes_
     )
 
     followup = st.selectbox(
         "Follow-up Gap",
-        [
-            "Same Day",
-            "1-2 Days",
-            "3-5 Days",
-            "More than 5 Days"
-        ]
+        encoders["Followup_Gap"].classes_
     )
+
+    script = st.selectbox(
+        "Script Tone",
+        encoders["Script_Tone"].classes_
+    )
+
+with c2:
 
     outreach = st.selectbox(
         "Outreach Type",
-        [
-            "WhatsApp",
-            "Call",
-            "Email"
-        ]
-    )
-
-with col2:
-
-    time_slot = st.selectbox(
-        "Time Slot",
-        [
-            "Morning",
-            "Afternoon",
-            "Evening"
-        ]
+        encoders["Outreach_Type"].classes_
     )
 
     pitch_minutes = st.number_input(
-        "Pitch Duration (minutes)",
-        1.0,
-        60.0,
-        10.0
+        "Pitch Duration",
+        value=10.0
     )
 
     attempts = st.number_input(
         "Attempts",
-        1,
-        10,
-        2
+        value=2
     )
 
     lag = st.number_input(
         "Lag",
-        0,
-        30,
-        5
+        value=5
     )
 
     elt = st.number_input(
         "ELT",
-        0,
-        100,
-        50
+        value=60
     )
 
     lead_score = st.slider(
@@ -135,88 +108,66 @@ with col2:
         50.0
     )
 
-# ==========================
-# ENCODING
-# ==========================
-
-# IMPORTANT:
-# Replace these mappings with the
-# exact mappings from your LabelEncoder.
-
-region_map = {
-    "East":0,
-    "North":1,
-    "South":2,
-    "West":3
-}
-
-course_map = {
-    "AI":0,
-    "Business Analytics":1,
-    "Cyber Security":2,
-    "Data Science":3
-}
-
-time_map = {
-    "Morning":0,
-    "Afternoon":1,
-    "Evening":2
-}
-
-pitch_map = {
-    "Consultative":0,
-    "Informative":1,
-    "Promotional":2
-}
-
-follow_map = {
-    "Same Day":0,
-    "1-2 Days":1,
-    "3-5 Days":2,
-    "More than 5 Days":3
-}
-
-script_map = {
-    "Formal":0,
-    "Friendly":1,
-    "Persuasive":2
-}
-
-outreach_map = {
-    "Call":0,
-    "Email":1,
-    "WhatsApp":2
-}
-
-# ==========================
+# ----------------------------------
 # PREDICT
-# ==========================
+# ----------------------------------
 
-if st.button("Predict Engagement"):
+if st.button("Predict"):
 
-    X = pd.DataFrame({
+    row = pd.DataFrame({
 
-        "Region":[region_map[region]],
-        "Course":[course_map[course]],
-        "Time_Slot":[time_map[time_slot]],
-        "Pitch_Category":[pitch_map[pitch]],
+        "Region":[
+            encoders["Region"].transform([region])[0]
+        ],
+
+        "Course":[
+            encoders["Course"].transform([course])[0]
+        ],
+
+        "Time_Slot":[
+            encoders["Time_Slot"].transform([time_slot])[0]
+        ],
+
+        "Pitch_Category":[
+            encoders["Pitch_Category"].transform([pitch])[0]
+        ],
+
         "Pitch_Minutes":[pitch_minutes],
-        "Followup_Gap":[follow_map[followup]],
-        "Script_Tone":[script_map[script]],
+
+        "Followup_Gap":[
+            encoders["Followup_Gap"].transform([followup])[0]
+        ],
+
+        "Script_Tone":[
+            encoders["Script_Tone"].transform([script])[0]
+        ],
+
         "Attempts":[attempts],
+
         "Lag":[lag],
+
         "ELT":[elt],
-        "Outreach_Type":[outreach_map[outreach]],
+
+        "Outreach_Type":[
+            encoders["Outreach_Type"].transform([outreach])[0]
+        ],
+
         "Lead_Score":[lead_score],
+
         "Conversion_Probability":[conversion]
 
     })
 
-    prediction = model.predict(X)[0]
+    prediction = model.predict(row)[0]
 
-    probability = model.predict_proba(X)[0]
+    probability = model.predict_proba(row)
 
-    st.divider()
+    confidence = round(
+        probability.max()*100,
+        2
+    )
+
+    st.markdown("---")
 
     if prediction == 1:
 
@@ -224,19 +175,19 @@ if st.button("Predict Engagement"):
 
         st.metric(
             "Confidence",
-            f"{probability[1]*100:.2f}%"
+            f"{confidence}%"
         )
 
         st.info("""
-### Business Recommendation
+### Recommendation
 
-✔ Priority Follow-up
+✔ Immediate Follow-up
 
-✔ Personalized Counselling
-
-✔ Immediate Sales Outreach
+✔ Priority Counselling
 
 ✔ High Conversion Potential
+
+✔ Allocate Sales Executive
 """)
 
     else:
@@ -245,17 +196,47 @@ if st.button("Predict Engagement"):
 
         st.metric(
             "Confidence",
-            f"{probability[0]*100:.2f}%"
+            f"{confidence}%"
         )
 
         st.warning("""
-### Business Recommendation
+### Recommendation
 
-• Increase Follow-up Frequency
+• Increase Follow-up
 
-• Send Reminder Campaigns
+• Send Reminder Messages
 
-• Improve Engagement Strategy
+• Improve Outreach Strategy
 
 • Reassess Lead Quality
+""")
+
+st.markdown("---")
+
+st.subheader("Model Information")
+
+st.write("""
+**Algorithm Used**
+
+- Decision Tree Classifier
+
+**Target Variable**
+
+- High Engagement
+
+**Input Features**
+
+- Region
+- Course
+- Time Slot
+- Pitch Category
+- Pitch Duration
+- Follow-up Gap
+- Script Tone
+- Attempts
+- Lag
+- ELT
+- Outreach Type
+- Lead Score
+- Conversion Probability
 """)
