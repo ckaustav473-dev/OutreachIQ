@@ -228,4 +228,4 @@ Kaustav Chakraborty
 
 License
 
-This project has been developed for academic and educational purposes as part of the MBA Summer Internship Project.
+This project has been developed for academic and educational purposes.
