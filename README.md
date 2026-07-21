@@ -128,38 +128,6 @@ Technology Stack
 
 ---
 
-Project Structure
-
-OutreachIQ/
-│
-├── app.py
-├── requirements.txt
-├── README.md
-├── data/
-│   └── learner_data.csv
-│
-├── models/
-│   ├── logistic_model.pkl
-│   ├── decision_tree.pkl
-│   ├── kmeans_model.pkl
-│   └── scaler.pkl
-│
-├── pages/
-│   ├── Dashboard.py
-│   ├── Analytics.py
-│   ├── Prediction.py
-│   ├── Segmentation.py
-│   ├── Automation.py
-│   └── About.py
-│
-├── assets/
-│   └── logo.png
-│
-└── utils/
-    ├── preprocessing.py
-    └── helper.py
-
----
 
 Installation
 
